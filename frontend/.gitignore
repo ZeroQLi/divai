@@ -1,0 +1,42 @@
+# Node & package manager
+node_modules/
+.npm/
+.pnpm-store/
+.pnpm-debug.log*
+*.log
+
+# Next.js build output
+.next/
+
+# Production build
+out/
+
+# OS/IDE junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Local env, secrets
+.env*
+!.env.example
+
+# Editor/IDE config
+.vscode/
+.idea/
+
+# Test coverage/output
+coverage/
+
+# Locales auto gen
+*.pot
+yarn.lock
+pnpm-lock.yaml
+
+# Misc backup/temp
+*~
+*.tmp
+
+# Ignore fixtures, test csv, and resources logs (not the actual PDF or AGENTS.md)
+/resources/*.csv
+/resources/*.log

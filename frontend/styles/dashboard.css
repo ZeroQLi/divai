@@ -1,0 +1,210 @@
+/* ─── Override water.css body constraint ─── */
+body {
+  max-width: none !important;
+}
+
+/* ─── Dashboard Layout ─── */
+.dashboard-main {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #e0e0f0;
+}
+
+.dashboard-user {
+  color: #8888a0;
+  font-size: 0.85rem;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: #252538;
+  border: 1px solid #3d3d56;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.card h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.05rem;
+  color: #e0e0f0;
+}
+
+/* ─── Status Badge ─── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-badge.in_progress {
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+.status-badge.in_progress::before { background: #60a5fa; }
+
+.status-badge.additional_info {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+}
+.status-badge.additional_info::before { background: #fbbf24; }
+
+.status-badge.approved {
+  background: rgba(5, 150, 105, 0.15);
+  color: #34d399;
+}
+.status-badge.approved::before { background: #34d399; }
+
+.status-badge.rejected {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+.status-badge.rejected::before { background: #f87171; }
+
+.status-badge.human_review {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+}
+.status-badge.human_review::before { background: #a78bfa; }
+
+/* ─── Status Description ─── */
+.status-desc {
+  margin: 0.5rem 0 0 0;
+  color: #b0b0c8;
+  font-size: 0.9rem;
+}
+
+/* ─── Confidence Meter ─── */
+.confidence-meter {
+  margin-top: 1rem;
+}
+
+.confidence-meter label {
+  display: block;
+  font-size: 0.8rem;
+  color: #8888a0;
+  margin-bottom: 0.3rem;
+}
+
+.confidence-bar {
+  height: 8px;
+  background: #3d3d56;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.confidence-fill.low { background: #ef4444; }
+.confidence-fill.medium { background: #f59e0b; }
+.confidence-fill.high { background: #10b981; }
+
+.confidence-label {
+  font-size: 0.75rem;
+  color: #8888a0;
+  margin-top: 0.2rem;
+}
+
+/* ─── Form ─── */
+.dashboard-form label {
+  display: block;
+}
+
+.dashboard-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-form .file-hint {
+  font-size: 0.8rem;
+  color: #8888a0;
+  margin-top: 0.25rem;
+}
+
+.dashboard-form .checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.dashboard-form .checkbox-row input {
+  margin-top: 0.2rem;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 0.65rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submit-btn:hover { background: #1d4ed8; }
+
+/* ─── Error ─── */
+.form-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+/* ─── ID display ─── */
+.application-id {
+  font-size: 0.75rem;
+  color: #8888a0;
+  margin-top: 0.25rem;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 500px) {
+  .dashboard-header { flex-direction: column; align-items: flex-start; }
+}
