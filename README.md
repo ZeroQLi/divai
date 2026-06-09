@@ -7,6 +7,15 @@ Housing Loan Arrears Rescheduling AI Agent.
 - Python 3.13+, [uv](https://docs.astral.sh/uv/)
 - Node.js 18+, [pnpm](https://pnpm.io/) (or npm)
 
+## Environment Files
+
+Create the following files before starting:
+
+| File | Purpose |
+|---|---|
+| `backend/.env` | `OPENROUTER_API_KEY` (OpenRouter key) |
+| `frontend/.env.local` | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `NEXTAUTH_SECRET`, `NEXT_PUBLIC_API_URL` |
+
 ## Quick Start
 
 ```bash

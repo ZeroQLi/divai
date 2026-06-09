@@ -204,6 +204,66 @@ body {
   margin-top: 0.25rem;
 }
 
+/* ─── Decisions Section ─── */
+.decisions-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  background: none;
+  border: none;
+  color: #e0e0f0;
+  cursor: pointer;
+}
+
+.toggle-arrow {
+  font-size: 0.8rem;
+  color: #8888a0;
+}
+
+.decisions-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.decisions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.decisions-table th {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  color: #8888a0;
+  font-weight: 600;
+  border-bottom: 1px solid #3d3d56;
+  white-space: nowrap;
+}
+
+.decisions-table td {
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid #2d2d44;
+  color: #d0d0e0;
+  vertical-align: middle;
+}
+
+.decisions-table .status-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.justification-cell {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #b0b0c8 !important;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 500px) {
   .dashboard-header { flex-direction: column; align-items: flex-start; }

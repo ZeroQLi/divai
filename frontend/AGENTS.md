@@ -8,6 +8,17 @@
 - **Style**: water.css + custom `dashboard.css` (body max-width override, status badges, confidence meter, card layout, form label/textarea width fixes)
 - **`/api/submit` stub removed** — form now POSTs directly to `NEXT_PUBLIC_API_URL`
 
+## Environment
+
+Create `frontend/.env.local` (committed, dev-only):
+
+```env
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+NEXTAUTH_SECRET=...
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
 ## Commands
 
 ```bash
@@ -25,7 +36,7 @@ pnpm start
 
 ## i18n
 
-- All visible strings → `locales/{en,ar}.json` (34 keys each)
+- All visible strings → `locales/{en,ar}.json` (37 keys each)
 - `_document.js` sets `<html lang>` / `<body dir>` from Next.js i18n
 - `LangToggle` component on every page
 
@@ -62,3 +73,4 @@ pnpm start
 - `NEXT_PUBLIC_API_URL` env var (default: `http://localhost:8000`)
 - CORS whitelisted for frontend origin only
 - Status endpoint: `GET {host}/api/applications/{id}`
+- Decisions endpoint: `GET {host}/api/decisions` — returns full audit trail (`loan_amount`, `old_emi`, `new_emi`, `extended_months`, `justification`, etc.). **Unprotected — suitable for a future admin dashboard page.**

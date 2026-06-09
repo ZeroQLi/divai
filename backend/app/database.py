@@ -50,10 +50,33 @@ def init_db():
             status TEXT,
             confidence REAL,
             explanation TEXT,
+            extended_months INTEGER DEFAULT 0,
             audit_data TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
         """)
+        db.execute("""
+        CREATE TABLE IF NOT EXISTS decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            application_id INTEGER REFERENCES applications(id),
+            applicant_id TEXT NOT NULL,
+            loan_amount REAL,
+            old_emi REAL,
+            new_emi REAL,
+            extended_months INTEGER DEFAULT 0,
+            confidence REAL,
+            justification TEXT,
+            status TEXT,
+            explanation TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+
+        try:
+            db.execute("ALTER TABLE applications ADD COLUMN extended_months INTEGER DEFAULT 0")
+        except Exception:
+            pass
+
         db.commit()
 
 

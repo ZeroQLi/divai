@@ -1,5 +1,5 @@
 import { useSession, signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ProtectedRoute from '../components/ProtectedRoute';
 import LangToggle from '../components/LangToggle';
@@ -61,8 +61,23 @@ function DashboardContent() {
   const [showForm, setShowForm] = useState(true);
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [decisions, setDecisions] = useState([]);
+  const [showDecisions, setShowDecisions] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  const fetchDecisions = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/decisions`);
+      if (res.ok) setDecisions(await res.json());
+    } catch {}
+  };
+
+  useEffect(() => {
+    fetchDecisions();
+    const interval = setInterval(fetchDecisions, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,17 +109,17 @@ function DashboardContent() {
       return;
     }
     if (!monthsDelayed || monthsDelayed < 1) {
-      setSubmitError('Months delayed is required');
+      setSubmitError(t['form.error.monthsDelayed']);
       setLoading(false);
       return;
     }
     if (!overdueAmount || overdueAmount <= 0) {
-      setSubmitError('Overdue amount is required');
+      setSubmitError(t['form.error.overdueAmount']);
       setLoading(false);
       return;
     }
     if (!currentSalary || currentSalary <= 0) {
-      setSubmitError('Current salary is required');
+      setSubmitError(t['form.error.salary']);
       setLoading(false);
       return;
     }
@@ -126,6 +141,7 @@ function DashboardContent() {
       setConfidence(data.confidence ?? 0);
       setApplicationId(data.application_id);
       setShowForm(false);
+      fetchDecisions();
     } catch (err) {
       setSubmitError(err.message || 'Network error');
     } finally {
@@ -148,6 +164,45 @@ function DashboardContent() {
         </div>
       </div>
 
+      {decisions.length > 0 && (
+        <div className="card decisions-section">
+          <button className="decisions-toggle" onClick={() => setShowDecisions(!showDecisions)}>
+            Recent Decisions ({decisions.length})
+            <span className="toggle-arrow">{showDecisions ? '▲' : '▼'}</span>
+          </button>
+          {showDecisions && (
+            <div className="decisions-table-wrap">
+              <table className="decisions-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Applicant</th>
+                    <th>Status</th>
+                    <th>New EMI</th>
+                    <th>Ext.</th>
+                    <th>Conf.</th>
+                    <th>Justification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {decisions.map(d => (
+                    <tr key={d.id}>
+                      <td>{d.id}</td>
+                      <td>{d.applicant_id}</td>
+                      <td><span className={`status-badge ${d.status}`}>{d.status}</span></td>
+                      <td>{d.new_emi?.toLocaleString()}</td>
+                      <td>{d.extended_months}m</td>
+                      <td>{Math.round(d.confidence * 100)}%</td>
+                      <td className="justification-cell">{d.justification}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       <StatusCard t={t} status={status} confidence={confidence} applicationId={applicationId} />
 
       {showForm && (
@@ -155,17 +210,17 @@ function DashboardContent() {
           <h2>{t['dashboard.form.title']}</h2>
           <form onSubmit={handleSubmit}>
             <div>
-              <label>Months Delayed *<br />
+              <label>{t['form.label.monthsDelayed']} *<br />
                 <input type="number" name="months_delayed" min="1" required />
               </label>
             </div>
             <div>
-              <label>Overdue Amount (AED) *<br />
+              <label>{t['form.label.overdueAmount']} *<br />
                 <input type="number" name="overdue_amount" min="0" step="0.01" required />
               </label>
             </div>
             <div>
-              <label>Current Salary (AED) *<br />
+              <label>{t['form.label.salary']} *<br />
                 <input type="number" name="current_salary" min="0" step="0.01" required />
               </label>
             </div>
