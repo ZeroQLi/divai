@@ -3,7 +3,7 @@
 ## Stack & State
 
 - **Framework**: Next.js 14, `pnpm@10.10.0`
-- **Auth**: next-auth v4 (GitHub for dev, UAE PASS sandbox OAuth2/OIDC)
+- **Auth**: next-auth v4 (UAE PASS sandbox OAuth2/OIDC)
 - **i18n**: next.js i18n routing, `en` + `ar`, localeDetection off
 - **Style**: water.css + custom `dashboard.css` (body max-width override, status badges, confidence meter, card layout, form label/textarea width fixes)
 - **`/api/submit` stub removed** — form now POSTs directly to `NEXT_PUBLIC_API_URL`
@@ -13,8 +13,6 @@
 Create `frontend/.env.local` (committed, dev-only):
 
 ```env
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
 NEXTAUTH_SECRET=...
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
@@ -31,7 +29,7 @@ pnpm start
 
 - Pages wrapped in `SessionProvider` (`_app.js`)
 - `ProtectedRoute` redirects unauthenticated → `/login`
-- Login page: GitHub + UAE PASS buttons
+- Login page: UAE PASS button
 - `next-auth` config at `pages/api/auth/[...nextauth].js`
 
 ## i18n

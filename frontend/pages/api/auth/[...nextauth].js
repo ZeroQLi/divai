@@ -1,12 +1,7 @@
 import NextAuth from 'next-auth';
-import GithubProvider from 'next-auth/providers/github';
 
 export default NextAuth({
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID || 'GITHUB_CLIENT_ID_PLACEHOLDER',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'GITHUB_CLIENT_SECRET_PLACEHOLDER',
-    }),
     {
       id: 'uae-pass',
       name: 'UAE PASS',
