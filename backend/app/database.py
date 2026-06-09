@@ -21,14 +21,30 @@ def init_db():
         db.execute("""
         CREATE TABLE IF NOT EXISTS applicants (
             applicant_id TEXT PRIMARY KEY,
-            ID TEXT, APPLICANT TEXT, APPLICATION_ID TEXT, AGREEMENT_ID TEXT, EDB_LOAN_ID TEXT, EDB_CUSTOMER_ID TEXT, REQUEST_TYPE TEXT, LOAN_AMOUNT REAL, CURRENT_SALARY REAL, OVER_DUE_AMT REAL, OVER_DUE_MONTHS INTEGER,
-            DEDUCT_FROM_SALARY TEXT, APPROVED_REQUEST_TYPE TEXT, NEW_EMI_APPLICABLE_MONTHS TEXT, CURRENT_EMI_AMT REAL, NEW_EMI_AMT REAL, CREATED_DATE TEXT, CREATED_BY TEXT, STATUS TEXT, APPROVED_DATE TEXT, JUSTIFICATIONS TEXT, REMARKS TEXT, UNTIL_LOAN_END REAL, ADDITIONAL_MONTHS REAL, ADDITIONAL_PREMIUM REAL, AUTH_SIGNATORY TEXT, START_MONTH TEXT, START_YEAR TEXT, YEAR TEXT, REMARKS_EN TEXT
+            EMAIL_ID TEXT,
+            APPLICATION_ID TEXT,
+            LOAN_AMOUNT REAL,
+            CURRENT_SALARY REAL,
+            OVER_DUE_AMT REAL,
+            OVER_DUE_MONTHS INTEGER,
+            CURRENT_EMI_AMT REAL,
+            NEW_EMI_AMT REAL,
+            CREATED_DATE TEXT,
+            STATUS TEXT,
+            APPROVED_DATE TEXT,
+            JUSTIFICATIONS TEXT,
+            REMARKS TEXT,
+            ADDITIONAL_MONTHS REAL,
+            REMARKS_EN TEXT
         );
         """)
         db.execute("""
         CREATE TABLE IF NOT EXISTS applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             applicant_id TEXT,
+            months_delayed INTEGER,
+            overdue_amount REAL,
+            current_salary REAL,
             remarks TEXT,
             agreement BOOLEAN,
             status TEXT,
@@ -41,6 +57,25 @@ def init_db():
         db.commit()
 
 
+MAP = {
+    "APPLICATION_ID": "APPLICATION_ID",
+    "LOAN_AMOUNT": "LOAN_AMOUNT",
+    "CURRENT_SALARY": "CURRENT_SALARY",
+    "OVER_DUE_AMT": "OVER_DUE_AMT",
+    "OVER_DUE_MONTHS": "OVER_DUE_MONTHS",
+    "CURRENT_EMI_AMT": "CURRENT_EMI_AMT",
+    "NEW_EMI_AMT": "NEW_EMI_AMT",
+    "CREATED_DATE": "CREATED_DATE",
+    "STATUS": "STATUS",
+    "APPROVED_DATE": "APPROVED_DATE",
+    "JUSTIFICATIONS": "JUSTIFICATIONS",
+    "REMARKS": "REMARKS",
+    "ADDITIONAL_MONTHS": "ADDITIONAL_MONTHS",
+    "REMARKS_EN": "REMARKS_EN",
+}
+DB_COLS = ["applicant_id"] + list(MAP.keys())
+PH = ",".join(["?"] * len(DB_COLS))
+
 def seed_from_csv():
     with get_db() as db:
         row = db.execute("SELECT COUNT(*) FROM applicants").fetchone()
@@ -52,18 +87,15 @@ def seed_from_csv():
             reader = csv.DictReader(f)
             if not reader.fieldnames:
                 return
-            cols = ",".join(reader.fieldnames)
-            placeholders = ",".join(["?"] * len(reader.fieldnames))
             for csv_row in reader:
                 applicant_id = csv_row.get("EDB_CUSTOMER_ID", "").strip()
                 if not applicant_id:
-                    applicant_id = csv_row.get("APPLICANT", "").strip()
-                if not applicant_id:
                     continue
-                row_values = [csv_row.get(col, None) for col in reader.fieldnames]
-                values = [applicant_id] + row_values
+                vals = [applicant_id]
+                for db_col, csv_col in MAP.items():
+                    vals.append(csv_row.get(csv_col, None))
                 db.execute(
-                    f"INSERT OR REPLACE INTO applicants (applicant_id,{cols}) VALUES (?,{placeholders})",
-                    values
+                    f"INSERT OR REPLACE INTO applicants ({','.join(DB_COLS)}) VALUES ({PH})",
+                    vals
                 )
             db.commit()

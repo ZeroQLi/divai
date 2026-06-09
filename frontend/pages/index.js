@@ -73,6 +73,10 @@ function DashboardContent() {
     const agreement = form.agreement.checked;
     const files = form.docs.files;
     const applicantId = session?.user?.id || session?.user?.email || '';
+    const emailId = session?.user?.email || '';
+    const monthsDelayed = parseInt(form.months_delayed.value, 10);
+    const overdueAmount = parseFloat(form.overdue_amount.value);
+    const currentSalary = parseFloat(form.current_salary.value);
 
     if (!remarks || remarks.length < 20) {
       setSubmitError(t['form.error.minRemarks']);
@@ -89,9 +93,28 @@ function DashboardContent() {
       setLoading(false);
       return;
     }
+    if (!monthsDelayed || monthsDelayed < 1) {
+      setSubmitError('Months delayed is required');
+      setLoading(false);
+      return;
+    }
+    if (!overdueAmount || overdueAmount <= 0) {
+      setSubmitError('Overdue amount is required');
+      setLoading(false);
+      return;
+    }
+    if (!currentSalary || currentSalary <= 0) {
+      setSubmitError('Current salary is required');
+      setLoading(false);
+      return;
+    }
 
     const formData = new FormData();
     formData.append('applicant_id', applicantId);
+    formData.append('email_id', emailId);
+    formData.append('months_delayed', monthsDelayed);
+    formData.append('overdue_amount', overdueAmount);
+    formData.append('current_salary', currentSalary);
     formData.append('remarks', remarks);
     formData.append('agreement', agreement);
     for (let i = 0; i < files.length; i++) formData.append('docs', files[i]);
@@ -131,6 +154,21 @@ function DashboardContent() {
         <div className="card dashboard-form">
           <h2>{t['dashboard.form.title']}</h2>
           <form onSubmit={handleSubmit}>
+            <div>
+              <label>Months Delayed *<br />
+                <input type="number" name="months_delayed" min="1" required />
+              </label>
+            </div>
+            <div>
+              <label>Overdue Amount (AED) *<br />
+                <input type="number" name="overdue_amount" min="0" step="0.01" required />
+              </label>
+            </div>
+            <div>
+              <label>Current Salary (AED) *<br />
+                <input type="number" name="current_salary" min="0" step="0.01" required />
+              </label>
+            </div>
             <div>
               <label>
                 {t['form.label.remarks']} *<br />

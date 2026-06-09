@@ -3,12 +3,12 @@ from typing import Optional
 
 class SubmitRequest(BaseModel):
     applicant_id: str
+    email_id: str
+    months_delayed: int
+    overdue_amount: float
+    current_salary: float
     remarks: str
     agreement: bool
-    # For future: allow form overrides
-    months_delayed: Optional[int] = None
-    overdue_amount: Optional[float] = None
-    current_salary: Optional[float] = None
 
 class SubmitResponse(BaseModel):
     application_id: int
@@ -26,9 +26,9 @@ class ApplicationOut(BaseModel):
 
 class ApplicantOut(BaseModel):
     applicant_id: str
-    # Add other CSV fields as needed
-    current_salary: Optional[float]
-    over_due_amt: Optional[float]
-    over_due_months: Optional[int]
-    status: Optional[str]
-    remarks: Optional[str]
+    email_id: Optional[str] = None
+    current_salary: Optional[float] = None
+    over_due_amt: Optional[float] = None
+    over_due_months: Optional[int] = None
+    status: Optional[str] = None
+    remarks: Optional[str] = None

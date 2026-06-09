@@ -11,30 +11,55 @@ router = APIRouter()
 @router.post("/submit", response_model=SubmitResponse)
 def submit_application(
     applicant_id: str = Form(...),
+    email_id: str = Form(""),
+    months_delayed: int = Form(...),
+    overdue_amount: float = Form(...),
+    current_salary: float = Form(...),
     remarks: str = Form(...),
     agreement: bool = Form(...),
     docs: Optional[List[UploadFile]] = File(None)
 ):
-    # Mock agent logic — update to real agent later
     status = "in_progress"
-    explanation = "Your request is being reviewed. (mock)"
+    explanation = "Your request is being reviewed."
     confidence = 0.0
 
-    # Insert application
     with get_db() as db:
+        existing = db.execute("SELECT applicant_id FROM applicants WHERE applicant_id = ?", (applicant_id,)).fetchone()
+        if not existing:
+            db.execute(
+                """
+                INSERT INTO applicants (
+                    applicant_id, EMAIL_ID, CURRENT_SALARY, OVER_DUE_AMT, OVER_DUE_MONTHS,
+                    LOAN_AMOUNT, STATUS
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    applicant_id,
+                    email_id,
+                    current_salary,
+                    overdue_amount,
+                    months_delayed,
+                    overdue_amount * 3,
+                    "NEW"
+                ]
+            )
+
         cur = db.execute(
             """
-            INSERT INTO applications (applicant_id, remarks, agreement, status, confidence, explanation, audit_data, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO applications (applicant_id, months_delayed, overdue_amount, current_salary, remarks, agreement, status, confidence, explanation, audit_data, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 applicant_id,
+                months_delayed,
+                overdue_amount,
+                current_salary,
                 remarks,
                 agreement,
                 status,
                 confidence,
                 explanation,
-                json.dumps({"phase": "mock"}),
+                json.dumps({"version": "1.0"}),
                 datetime.datetime.utcnow().isoformat()
             ]
         )
@@ -47,6 +72,3 @@ def submit_application(
         "confidence": confidence
     }
 
-# To use real agent, replace above logic with:
-# from app.agent.pipeline import run_pipeline
-# result = run_pipeline(applicant_id, ...)

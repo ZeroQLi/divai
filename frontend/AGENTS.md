@@ -42,20 +42,19 @@ pnpm start
 
 ## Form Fields (rescheduling request)
 
-1. `remarks` — textarea, min 20 chars, required
-2. `agreement` — checkbox (deduct up to 20% salary), required
-3. Document upload — salary certificate required + optional extras (PDF/JPG/PNG, ≤5 files, ≤15MB each)
-4. `applicant_id` — sent from session (`user.id` or `user.email`) as hidden field
-
-**Removed inputs:** `months_delayed`, `overdue_amount`, `current_salary` — values come from database via applicant_id lookup.
-
-All fields have localized labels + help text.
+1. `months_delayed` — number input, min 1, required
+2. `overdue_amount` — number input (AED), min 0, required
+3. `current_salary` — number input (AED), min 0, required
+4. `remarks` — textarea, min 20 chars, required
+5. `agreement` — checkbox (deduct up to 20% salary), required
+6. Document upload — PDF/JPG/PNG, ≤5 files, ≤15MB each, required
+7. `applicant_id` + `email_id` — sent from session as hidden fields
 
 ## Submission Flow
 
-1. POST `{NEXT_PUBLIC_API_URL}/api/submit` with multipart FormData: `applicant_id`, `remarks`, `agreement`, `docs`
+1. POST `{NEXT_PUBLIC_API_URL}/api/submit` with multipart FormData: `applicant_id`, `email_id`, `months_delayed`, `overdue_amount`, `current_salary`, `remarks`, `agreement`, `docs`
 2. Backend returns `{ application_id, status, explanation, confidence }`
-3. Display status + explanation + confidence meter (no raw data)
+3. Display status + explanation + confidence meter
 4. If status = "Additional Information Required", form reappears
 
 ## Backend Integration
