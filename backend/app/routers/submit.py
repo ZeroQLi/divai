@@ -127,6 +127,8 @@ def submit_application(
         "explanation": result.explanation,
         "confidence": result.confidence,
         "extended_months": result.extended_months,
+        "new_emi": result.new_emi,
+        "old_emi": old_emi,
     }
 
 

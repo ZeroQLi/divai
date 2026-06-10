@@ -264,7 +264,208 @@ body {
   color: #b0b0c8 !important;
 }
 
+/* ─── Admin Page ─── */
+.admin-page {
+  width: 100vw;
+  min-height: 100vh;
+  padding: 1rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.admin-header-left h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #e0e0f0;
+}
+
+.admin-row-count {
+  font-size: 0.85rem;
+  color: #8888a0;
+}
+
+.admin-back-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.admin-back-link:hover {
+  text-decoration: underline;
+}
+
+.admin-loading, .admin-empty {
+  color: #8888a0;
+  font-size: 0.95rem;
+  padding: 2rem 0;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 0.55rem 0.5rem;
+  color: #8888a0;
+  font-weight: 600;
+  border-bottom: 1px solid #3d3d56;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: #1a1a2e;
+  z-index: 1;
+}
+
+.admin-table td {
+  padding: 0.5rem 0.5rem;
+  border-bottom: 1px solid #252538;
+  color: #d0d0e0;
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:hover {
+  background: #252538;
+}
+
+.admin-cell-id {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #b0b0c8;
+}
+
+.admin-cell-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-cell-text {
+  min-width: 180px;
+  word-break: break-word;
+  color: #b0b0c8 !important;
+  line-height: 1.45;
+}
+
+.admin-cell-date {
+  font-size: 0.8rem;
+  color: #8888a0;
+  white-space: nowrap;
+}
+
+.admin-table .status-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.admin-confidence {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.admin-confidence.low {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.admin-confidence.medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.admin-confidence.high {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+/* ─── EMI Row ─── */
+.emi-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.emi-tag {
+  display: inline-block;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.emi-tag.old {
+  background: rgba(100, 100, 140, 0.2);
+  color: #b0b0c8;
+}
+
+.emi-tag.new {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+/* ─── Status Explanation ─── */
+.status-explain {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.8rem;
+  background: #1e1e32;
+  border-radius: 6px;
+  color: #c0c0d8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ─── Admin Link ─── */
+.admin-link {
+  color: #60a5fa;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.admin-link:hover {
+  text-decoration: underline;
+}
+
 /* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .admin-page {
+    padding: 0.75rem;
+  }
+  .admin-header-left {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .admin-cell-text {
+    min-width: auto;
+  }
+}
+
 @media (max-width: 500px) {
   .dashboard-header { flex-direction: column; align-items: flex-start; }
 }

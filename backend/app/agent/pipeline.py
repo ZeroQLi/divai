@@ -184,10 +184,10 @@ def run_pipeline(
 
     confidence = proposal.confidence
     status = proposal.status
-    if confidence < 0.7:
+    if confidence < settings.confidence_threshold:
         status = "human_review"
 
-    return AgentResult(
+    final_result = AgentResult(
         new_emi=new_emi,
         extended_months=extended_months,
         confidence=confidence,
@@ -195,3 +195,7 @@ def run_pipeline(
         explanation=proposal.explanation,
         justification=proposal.justification,
     )
+
+    _debug_log("FINAL RESULT (AgentResult)", json.dumps(final_result.model_dump(), indent=2))
+
+    return final_result

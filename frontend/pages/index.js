@@ -21,7 +21,7 @@ const STATUS_DESC = {
   human_review: 'dashboard.status.desc.human_review',
 };
 
-function StatusCard({ t, status, confidence, applicationId }) {
+function StatusCard({ t, status, confidence, applicationId, explanation, newEmi, oldEmi }) {
   const pct = confidence != null ? Math.round(confidence * 100) : 0;
   const level = pct < 40 ? 'low' : pct < 70 ? 'medium' : 'high';
   return (
@@ -31,6 +31,13 @@ function StatusCard({ t, status, confidence, applicationId }) {
         {t[STATUS_LABELS[status]]}
       </span>
       <p className="status-desc">{t[STATUS_DESC[status]]}</p>
+      {explanation && <p className="status-explain">{explanation}</p>}
+      {(newEmi != null || oldEmi != null) && (
+        <div className="emi-row">
+          {oldEmi != null && <span className="emi-tag old">Old EMI: {Number(oldEmi).toLocaleString()}</span>}
+          {newEmi != null && <span className="emi-tag new">New EMI: {Number(newEmi).toLocaleString()}</span>}
+        </div>
+      )}
       <div className="confidence-meter">
         <label>{t['dashboard.status.explanation']}</label>
         <div className="confidence-bar">
@@ -57,6 +64,9 @@ function DashboardContent() {
   const { data: session } = useSession();
   const [status, setStatus] = useState('in_progress');
   const [confidence, setConfidence] = useState(0);
+  const [explanation, setExplanation] = useState('');
+  const [newEmi, setNewEmi] = useState(null);
+  const [oldEmi, setOldEmi] = useState(null);
   const [applicationId, setApplicationId] = useState(null);
   const [showForm, setShowForm] = useState(true);
   const [submitError, setSubmitError] = useState('');
@@ -139,6 +149,9 @@ function DashboardContent() {
       const data = await res.json();
       setStatus(data.status || 'in_progress');
       setConfidence(data.confidence ?? 0);
+      setExplanation(data.explanation || '');
+      setNewEmi(data.new_emi ?? null);
+      setOldEmi(data.old_emi ?? null);
       setApplicationId(data.application_id);
       setShowForm(false);
       fetchDecisions();
@@ -159,6 +172,7 @@ function DashboardContent() {
           </span>
         </div>
         <div className="dashboard-actions">
+          <a href="/admin" className="admin-link">Admin</a>
           <LangToggle />
           <button onClick={() => signOut()}>{t['dashboard.logout']}</button>
         </div>
@@ -203,7 +217,7 @@ function DashboardContent() {
         </div>
       )}
 
-      <StatusCard t={t} status={status} confidence={confidence} applicationId={applicationId} />
+      <StatusCard t={t} status={status} confidence={confidence} applicationId={applicationId} explanation={explanation} newEmi={newEmi} oldEmi={oldEmi} />
 
       {showForm && (
         <div className="card dashboard-form">

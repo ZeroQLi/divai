@@ -16,6 +16,8 @@ class SubmitResponse(BaseModel):
     explanation: str
     confidence: float
     extended_months: int = 0
+    new_emi: float = 0
+    old_emi: Optional[float] = None
 
 class ApplicationOut(BaseModel):
     id: int
