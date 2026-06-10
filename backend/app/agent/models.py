@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional, Any
 
 
 class AgentResult(BaseModel):
@@ -11,8 +10,10 @@ class AgentResult(BaseModel):
     justification: str
 
 
-class AgentDeps:
-    def __init__(self, db: Any, applicant_id: str, form_data: dict):
-        self.db = db
-        self.applicant_id = applicant_id
-        self.form_data = form_data
+class AgentProposal(BaseModel):
+    scenario: str
+    proposed_new_emi: float
+    status: str
+    confidence: float
+    explanation: str
+    justification: str

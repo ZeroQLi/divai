@@ -1,18 +1,55 @@
 # Backend – FastAPI + AI Agent Pipeline
 
-## Stack
-- **Framework**: FastAPI (Python 3.13)
-- **Database**: SQLite via python sqlite3, seeded from `housing_reschedule_with_english.csv` (16 cols, 100 rows)
-- **Agent**: pydantic-ai v1 with OpenRouter (`openai/gpt-4o-mini` via OpenAI-compatible API). Deterministic rule-based pipeline using an LLM for hardship context understanding (Arabic/English remarks).
+## Critical Commands & Setup
 
-## Commands
-
+**Exact startup commands:**
 ```bash
 uv run uvicorn app.main:app --reload --port 8000
-# Swagger at http://localhost:8000/docs
+# Swagger: http://localhost:8000/docs
 ```
 
-## Database
+**Database setup (auto-run):**
+- First backend start reads `housing_reschedule_with_english.csv` (28 cols, 100 rows) into `applicants` table
+- Manual inspection: `uv run sqlite_web data.db --port 8080`
+
+**Environment setup:**
+- Create `backend/.env` with ONLY: `OPENROUTER_API_KEY=sk-or-v1-...`
+- Environment resolves paths to backend/ directory automatically
+
+## Agent Pipeline Mechanics
+
+**6-step sequential process:**
+1. **Retrieve** → DB lookup (`retrieve_applicant` tool)
+2. **Check R3** → Active application detection (`check_r3` tool) 
+3. **Read remarks** → Arabic/English hardship detection (LLM-driven)
+4. **Apply rules** → R1 cap, assessment matrix (`apply_r1_cap` tool)
+5. **Compute EMI** → Capped new EMI (`compute_new_emi_amount` tool)
+6. **Decide** → Status + confidence + justification
+
+**Agent architecture quirks:**
+- Uses pydantic-ai v1 with OpenRouter (`openai/gpt-4o-mini`)
+- LLM reads Arabic/English remarks for hardship context
+- All calculations are tools (not embedded in LLM response)
+- 5 statuses: `in_progress`, `additional_info`, `approved`, `rejected`, `human_review`
+- **Critical**: Confidence <0.7 automatically → `human_review`
+
+## Framework-Specific Implementation
+
+**Python/fastapi quirks:**
+- Uses `uv` for dependency management (not pip)
+- SQLite via python's built-in sqlite3 (not SQLAlchemy/ORM)
+- Database path resolution: `DATABASE_URL` resolves to backend/
+- No type checking or linting pipeline
+
+**Critical file locations:**
+```
+backend/app/agent/pipeline.py:158  # run_pipeline()
+backend/app/agent/rules.py:4      # R1, R2, R3, confidence scoring
+backend/app/agent/calculator.py:1  # Extended months math
+backend/app/routers/submit.py:15   # POST /api/submit
+```
+
+## Database Schema
 
 ### `applicants` (seeded from CSV)
 `applicant_id` (TEXT PK from `EDB_CUSTOMER_ID`), `EMAIL_ID`, `APPLICATION_ID`, `LOAN_AMOUNT`, `CURRENT_SALARY`, `OVER_DUE_AMT`, `OVER_DUE_MONTHS`, `CURRENT_EMI_AMT`, `NEW_EMI_AMT`, `CREATED_DATE`, `STATUS`, `APPROVED_DATE`, `JUSTIFICATIONS`, `REMARKS`, `ADDITIONAL_MONTHS`, `REMARKS_EN`.
@@ -34,59 +71,17 @@ uv run uvicorn app.main:app --reload --port 8000
 | GET | `/api/decisions` | List all decisions (for admin dashboard — no auth) |
 | GET | `/api/decisions/{id}` | Get single decision |
 
-## Agent Pipeline
+## Framework Quirks & Gotchas
 
-Sequential per submission: **Retrieve** (DB lookup) → **Check R3** (active app?) → **Read remarks** (LLM-driven Arabic/English hardship detection) → **Apply rules** (R1 cap, assessment matrix) → **Compute EMI** (deterministic tools) → **Decide** (LLM sets status + confidence).
+**Python/fastapi specifics:**
+- Uses `uv` for dependency management (not pip)
+- SQLite via python's built-in sqlite3 (not SQLAlchemy/ORM)
+- Agent pipeline uses pydantic-ai v1 with OpenRouter (`openai/gpt-4o-mini`)
+- **Critical**: Database path resolution (`DATABASE_URL` resolves to backend/)
 
-Pipeline uses pydantic-ai `Agent` with OpenRouter (`openai/gpt-4o-mini`). The LLM reads remarks in Arabic/English for hardship context, proposes decisions, and calls Python tools for deterministic math (R1 cap, EMI, extended months).
-
-## Environment
-
-Create `backend/.env` (committed, dev-only) with your OpenRouter key:
-
-```env
-OPENROUTER_API_KEY=sk-or-v1-...
-```
-
-## Configuration (env vars)
-
-| Variable | Default | Description |
-|---|---|---|
-| `DATABASE_URL` | `sqlite:///./data.db` (resolved to backend/) | SQLite path |
-| `CORS_ORIGIN` | `http://localhost:3000` | Allowed frontend origin |
-| `CSV_PATH` | `housing_reschedule_with_english.csv` (resolved to backend/) | Seed CSV path |
-| `CONFIDENCE_THRESHOLD` | `0.7` | Escalation threshold |
-| `OPENROUTER_API_KEY` | `""` | OpenRouter key (required for agent) |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | OpenRouter API endpoint |
-| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | Model name on OpenRouter |
-| `HOST` | `0.0.0.0` | Bind address |
-| `PORT` | `8000` | Listen port |
-
-## File structure
-
-```
-backend/
-├── pyproject.toml
-├── housing_reschedule_with_english.csv
-├── .venv/
-├── data.db
-└── app/
-    ├── __init__.py
-    ├── config.py
-    ├── database.py
-    ├── main.py
-    ├── agent/                   # Agent pipeline (built)
-    │   ├── __init__.py
-    │   ├── pipeline.py          # pydantic-ai Agent + tools + run_pipeline()
-    │   ├── models.py            # AgentResult, AgentDeps
-    │   ├── rules.py             # R1, R3, confidence scoring
-    │   └── calculator.py        # Extended months computation
-    ├── models/
-    │   ├── __init__.py
-    │   └── schemas.py
-    └── routers/
-        ├── __init__.py
-        ├── submit.py            # POST /api/submit (+ GET /api/decisions)
-        ├── applications.py
-        └── applicants.py
-```
+**Agent implementation quirks:**
+- Sequential 6-step pipeline with deterministic tools
+- Confidence threshold: <0.7 → `human_review`
+- 5 possible outcomes: `approved`, `rejected`, `additional_info`, `human_review`, `in_progress`
+- LLM reads Arabic/English for hardship context
+- Unprotected admin endpoint: `GET /api/decisions`

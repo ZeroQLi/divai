@@ -114,6 +114,16 @@ def seed_from_csv():
                 applicant_id = csv_row.get("EDB_CUSTOMER_ID", "").strip()
                 if not applicant_id:
                     continue
+
+                # Calculate LOAN_AMOUNT from CURRENT_EMI_AMT * ADDITIONAL_MONTHS
+                current_emi = float(csv_row.get("CURRENT_EMI_AMT") or 0)
+                additional_months = float(csv_row.get("ADDITIONAL_MONTHS") or 0)
+                overdue_months = float(csv_row.get("OVER_DUE_MONTHS") or 0)
+                if current_emi > 0 and additional_months > 0:
+                    csv_row["LOAN_AMOUNT"] = round(current_emi * additional_months, 2)
+                elif current_emi > 0:
+                    csv_row["LOAN_AMOUNT"] = round(current_emi * max(overdue_months, 12), 2)
+
                 vals = [applicant_id]
                 for db_col, csv_col in MAP.items():
                     vals.append(csv_row.get(csv_col, None))

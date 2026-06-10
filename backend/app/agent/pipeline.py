@@ -1,43 +1,68 @@
-from pydantic_ai import Agent, RunContext
+import json
+
+from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from ..config import settings
-from .models import AgentResult, AgentDeps
+from .models import AgentResult, AgentProposal
 from . import rules, calculator
+
+DEBUG = True
 
 
 SYSTEM_PROMPT = """You are a loan rescheduling officer for the Sheikh Zayed Housing Programme (Ministry of Energy and Infrastructure, UAE).
 
-Your task is to evaluate each rescheduling request step by step:
+Evaluate the rescheduling request and output your proposal.
 
-1. **RETRIEVE** — Call `retrieve_applicant` to fetch the applicant's loan record.
-2. **CHECK R3 (active application)** — If the applicant already has a NEW/IN_PROGRESS/PENDING application, the status must be `rejected`.
-3. **READ THE REMARKS** — The applicant's stored remarks (`REMARKS`, `REMARKS_EN`) and their new form submission (`remarks`) may contain hardship context. Read them carefully — they may be in **Arabic or English**. Identify the scenario:
+1. **IDENTIFY THE SCENARIO** from the applicant's stored remarks and their new form submission. Remarks may be in **Arabic or English**. Choose one:
    - `unemployment` — lost job, no stable income
    - `medical` — health treatment, medical bills
    - `temporary` — travel, official assignment, temporary circumstance
-   - `financial_difficulty` — high obligations, debt, over 60% income-to-obligation
+   - `financial_difficulty` — high obligations, debt
    - `normal` — no special hardship
-4. **APPLY THE MATRIX**:
-   - Income increased → EMI may increase up to the R1 cap (20% of salary)
-   - Income decreased → maintain or reduce current EMI
-   - Obligations > 60% → reduce increase or route to human_review
-   - Unemployment → keep current EMI, move arrears to end of term
-   - Temporary circumstances → keep current EMI, postpone increase
-   - Medical / hardship → keep current EMI, extend term
-5. **USE TOOLS FOR MATH** — Call `apply_r1_cap`, `compute_new_emi_amount`, and `compute_extended_months_count` for all financial calculations. Do not compute these yourself.
-6. **DECIDE** — Set `status`, `confidence`, `explanation`, and `justification`:
+
+2. **PROPOSE A DECISION**:
    - Status must be one of: `approved`, `rejected`, `additional_info`, `human_review`, `in_progress`
    - `confidence`: 0.0–1.0 based on data completeness, clarity of the case, and hardship clarity
    - If hardship is detected but unclear → `human_review`
-   - If R3 active → `rejected`
-   - If rules pass clearly → `approved`
-   - `explanation` is a short citizen-facing message in plain English
-   - `justification` is a 2–3 sentence internal audit remark explaining what was decided and why
 
-IMPORTANT: The applicant's remarks may be in Arabic. Read them with the same care as English text.
-"""
+3. **PROPOSE A NEW EMI** — Based on the applicant's salary, current EMI, and hardship, propose a reasonable new monthly payment amount.
 
+4. **OUTPUT** your proposal as structured data. The system will handle all financial calculations (R1 cap, EMI computation, extended months)."""
+
+
+def _debug_log(label: str, content: str):
+    if not DEBUG:
+        return
+    border = "=" * 70
+    print(f"\n{border}")
+    print(f"  {label}")
+    print(border)
+    print(content)
+    print()
+
+
+def _debug_messages(messages):
+    if not DEBUG:
+        return
+    for msg in messages:
+        for part in msg.parts:
+            kind = part.part_kind
+            if kind == "system-prompt":
+                continue
+            if kind == "user-prompt":
+                print(f"\n--- USER ---\n{part.content}")
+            elif kind == "model-text":
+                print(f"\n--- MODEL TEXT ---\n{part.content}")
+            elif kind == "tool-call":
+                print(f"\n--- STRUCTURED OUTPUT ({part.tool_name}) ---")
+                try:
+                    parsed = json.loads(part.args)
+                    print(json.dumps(parsed, indent=2))
+                except (json.JSONDecodeError, TypeError):
+                    print(part.args)
+    if DEBUG:
+        print()
 
 _agent = None
 
@@ -63,93 +88,10 @@ def _get_agent() -> Agent:
 
     agent = Agent(
         model,
-        output_type=AgentResult,
-        deps_type=AgentDeps,
+        output_type=AgentProposal,
         system_prompt=SYSTEM_PROMPT,
-        model_settings={"max_tokens": 2000},
+        model_settings={"max_tokens": 1000},
     )
-
-    @agent.tool
-    async def retrieve_applicant(ctx: RunContext[AgentDeps]) -> dict | None:
-        """Fetch the applicant's full loan record from the database.
-
-        Returns a dict with keys: applicant_id, CURRENT_SALARY, CURRENT_EMI_AMT,
-        OVER_DUE_AMT, OVER_DUE_MONTHS, LOAN_AMOUNT, REMARKS, REMARKS_EN,
-        STATUS, ADDITIONAL_MONTHS, NEW_EMI_AMT, JUSTIFICATIONS, EMAIL_ID.
-        Returns None if the applicant is not found.
-        """
-        row = ctx.deps.db.execute(
-            """SELECT applicant_id, EMAIL_ID, LOAN_AMOUNT, CURRENT_SALARY,
-                      OVER_DUE_AMT, OVER_DUE_MONTHS, CURRENT_EMI_AMT, NEW_EMI_AMT,
-                      STATUS, JUSTIFICATIONS, REMARKS, ADDITIONAL_MONTHS, REMARKS_EN
-               FROM applicants WHERE applicant_id = ?""",
-            (ctx.deps.applicant_id,),
-        ).fetchone()
-        if not row:
-            return None
-        return dict(row)
-
-    @agent.tool
-    async def check_r3(ctx: RunContext[AgentDeps], applicant: dict) -> dict:
-        """Check if the applicant has an active application (Rule 3).
-
-        Args:
-            applicant: The applicant dict from retrieve_applicant.
-        Returns:
-            {'active': bool, 'status': str or None}
-        """
-        return rules.check_r3(applicant)
-
-    @agent.tool
-    async def apply_r1_cap(ctx: RunContext[AgentDeps], salary: float) -> float:
-        """Compute the maximum allowed monthly EMI under Rule 1 (20% of salary).
-
-        Args:
-            salary: The applicant's monthly income.
-        Returns:
-            Maximum permitted EMI amount.
-        """
-        return rules.apply_r1(salary)
-
-    @agent.tool
-    async def compute_new_emi_amount(
-        ctx: RunContext[AgentDeps],
-        current_emi: float,
-        proposed_emi: float,
-        max_allowed: float,
-    ) -> float:
-        """Compute the final new EMI, capped at max_allowed by Rule 1.
-
-        Args:
-            current_emi: The applicant's current monthly EMI.
-            proposed_emi: The officer's proposed new EMI.
-            max_allowed: The R1 cap (20% of salary).
-        Returns:
-            The final new EMI amount.
-        """
-        return round(min(proposed_emi, max_allowed), 2)
-
-    @agent.tool
-    async def compute_extended_months_count(
-        ctx: RunContext[AgentDeps],
-        overdue_amount: float,
-        current_emi: float,
-        new_emi: float,
-        scenario: str,
-    ) -> int:
-        """Compute how many additional months to extend the loan term.
-
-        Args:
-            overdue_amount: Total overdue amount.
-            current_emi: Current monthly EMI.
-            new_emi: The proposed new EMI.
-            scenario: The hardship scenario (unemployment, temporary, medical, etc.).
-        Returns:
-            Number of additional months to extend.
-        """
-        return calculator.compute_extended_months(
-            overdue_amount, current_emi, new_emi, scenario
-        )
 
     _agent = agent
     return agent
@@ -162,20 +104,48 @@ def run_pipeline(
 ) -> AgentResult:
     """Run the agent pipeline for a rescheduling application.
 
-    Args:
-        applicant_id: The applicant's ID.
-        form_data: Dict with keys: email_id, months_delayed, overdue_amount,
-                   current_salary, remarks, agreement.
-        db: An active sqlite3 connection (dict cursor).
-    Returns:
-        An AgentResult with new_emi, extended_months, confidence, status,
-        explanation, and justification.
+    Pre-LLM (deterministic): Retrieve applicant, check R3.
+    LLM (single call): Identify hardship scenario, propose decision.
+    Post-LLM (deterministic): Apply R1 cap, compute extended months, term cap.
     """
-    agent = _get_agent()
-    deps = AgentDeps(db=db, applicant_id=applicant_id, form_data=form_data)
+    # --- Pre-LLM: retrieve applicant ---
+    row = db.execute(
+        """SELECT applicant_id, EMAIL_ID, LOAN_AMOUNT, CURRENT_SALARY,
+                  OVER_DUE_AMT, OVER_DUE_MONTHS, CURRENT_EMI_AMT, NEW_EMI_AMT,
+                  STATUS, JUSTIFICATIONS, REMARKS, ADDITIONAL_MONTHS, REMARKS_EN
+           FROM applicants WHERE applicant_id = ?""",
+        (applicant_id,),
+    ).fetchone()
+    applicant = dict(row) if row else None
+
+    # --- Pre-LLM: clear old pending applications for this applicant ---
+    old = db.execute(
+        "SELECT id FROM applications WHERE applicant_id = ? AND status IN ('in_progress', 'additional_info')",
+        (applicant_id,),
+    ).fetchall()
+    if old:
+        old_ids = [row["id"] for row in old]
+        placeholders = ",".join("?" for _ in old_ids)
+        db.execute(f"DELETE FROM decisions WHERE application_id IN ({placeholders})", old_ids)
+        db.execute(f"DELETE FROM applications WHERE id IN ({placeholders})", old_ids)
+
+    # --- Build user prompt ---
+    if applicant:
+        applicant_info = (
+            f"Applicant: {applicant_id}\n"
+            f"Loan amount: {applicant.get('LOAN_AMOUNT')}\n"
+            f"Current salary: {applicant.get('CURRENT_SALARY')}\n"
+            f"Current EMI: {applicant.get('CURRENT_EMI_AMT')}\n"
+            f"Overdue amount: {applicant.get('OVER_DUE_AMT')}\n"
+            f"Overdue months: {applicant.get('OVER_DUE_MONTHS')}\n"
+            f"Stored remarks: {applicant.get('REMARKS') or ''}\n"
+            f"Stored remarks (EN): {applicant.get('REMARKS_EN') or ''}\n"
+        )
+    else:
+        applicant_info = f"Applicant: {applicant_id} (no existing record)\n"
 
     user_prompt = (
-        f"Process rescheduling for applicant {applicant_id}.\n\n"
+        f"{applicant_info}\n"
         f"Form submission:\n"
         f"- Salary: {form_data.get('current_salary')}\n"
         f"- Overdue amount: {form_data.get('overdue_amount')}\n"
@@ -184,5 +154,44 @@ def run_pipeline(
         f"- Agreement (deduct up to 20%): {form_data.get('agreement')}"
     )
 
-    result = agent.run_sync(user_prompt, deps=deps)
-    return result.output
+    # --- LLM call: single call, no tools ---
+    _debug_log("USER PROMPT TO LLM", user_prompt)
+
+    agent = _get_agent()
+    result = agent.run_sync(user_prompt)
+
+    _debug_log("RAW LLM CONVERSATION", "")
+    _debug_messages(result.all_messages())
+
+    proposal = result.output
+    _debug_log("STRUCTURED OUTPUT (AgentProposal)", json.dumps(proposal.model_dump(), indent=2))
+
+    # --- Post-LLM: deterministic financial calculations ---
+    current_emi = (applicant.get("CURRENT_EMI_AMT") or 0.0) if applicant else 0.0
+    salary = (
+        (applicant.get("CURRENT_SALARY") or form_data.get("current_salary", 0.0))
+        if applicant
+        else form_data.get("current_salary", 0.0)
+    )
+    r1_cap = rules.apply_r1(salary)
+    new_emi = round(min(proposal.proposed_new_emi, r1_cap), 2)
+
+    overdue_amount = form_data.get("overdue_amount", 0.0)
+    original_term = (applicant.get("ADDITIONAL_MONTHS") or 0.0) if applicant else 0.0
+    extended_months = calculator.compute_extended_months(
+        overdue_amount, current_emi, new_emi, proposal.scenario, original_term
+    )
+
+    confidence = proposal.confidence
+    status = proposal.status
+    if confidence < 0.7:
+        status = "human_review"
+
+    return AgentResult(
+        new_emi=new_emi,
+        extended_months=extended_months,
+        confidence=confidence,
+        status=status,
+        explanation=proposal.explanation,
+        justification=proposal.justification,
+    )

@@ -18,6 +18,6 @@ class Settings(BaseSettings):
     port: int = 8000
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_model: str = "openai/gpt-4o-mini"
+    openrouter_model: str = "google/gemma-4-31b-it"
 
 settings = Settings()

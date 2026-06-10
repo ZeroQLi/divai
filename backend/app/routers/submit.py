@@ -23,12 +23,16 @@ def submit_application(
     with get_db() as db:
         existing = db.execute("SELECT applicant_id FROM applicants WHERE applicant_id = ?", (applicant_id,)).fetchone()
         if not existing:
+            monthly_rate = overdue_amount / max(months_delayed, 1)
+            current_emi = round(monthly_rate, 2)
+            loan_amount = round(current_emi * 12, 2)
             db.execute(
                 """
                 INSERT INTO applicants (
                     applicant_id, EMAIL_ID, CURRENT_SALARY, OVER_DUE_AMT, OVER_DUE_MONTHS,
-                    LOAN_AMOUNT, STATUS
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    LOAN_AMOUNT, STATUS, ADDITIONAL_MONTHS, CURRENT_EMI_AMT,
+                    REMARKS, REMARKS_EN
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     applicant_id,
@@ -36,8 +40,12 @@ def submit_application(
                     current_salary,
                     overdue_amount,
                     months_delayed,
-                    overdue_amount * 3,
-                    "NEW"
+                    loan_amount,
+                    "NEW",
+                    12,
+                    current_emi,
+                    remarks,
+                    remarks,
                 ]
             )
 
@@ -53,7 +61,7 @@ def submit_application(
         result = run_pipeline(applicant_id, form_data, db)
 
         audit = json.dumps({
-            "remark": result.justification,
+            "justification": result.justification,
             "new_emi": result.new_emi,
             "extended_months": result.extended_months,
         })
