@@ -29,7 +29,7 @@ Backend Swagger at `http://localhost:8000/docs`.
 - **Agent pipeline built** (pydantic-ai + OpenRouter). POST `/api/submit` runs the full pipeline. Requires `OPENROUTER_API_KEY` in `backend/.env`.
 - **5 statuses**: `in_progress`, `additional_info`, `approved`, `rejected`, `human_review`. Confidence < 0.7 → human review.
 - **Business rules spec**: `backend/resources/AGENT_GUIDE.md`.
-- **Auth**: UAE PASS (sandbox OAuth2/OIDC). Credentials in `frontend/.env.local` — treat as dev-only.
+- **Auth**: GitHub (dev) + UAE PASS (sandbox OAuth2/OIDC). Credentials in `frontend/.env.local` — treat as dev-only.
 - **No tests, no CI/CD, no lint/typecheck commands.** No pre-commit hooks.
 - **CORS**: whitelisted for frontend origin only. Frontend at `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`).
 - **Per-package details**: See `backend/AGENTS.md` (pipeline spec, DB schema, env vars) and `frontend/AGENTS.md` (form fields, component tree, i18n).
@@ -38,6 +38,6 @@ Backend Swagger at `http://localhost:8000/docs`.
 
 | File | Purpose | Git |
 |---|---|---|
-| `frontend/.env.local` | Frontend secrets (UAE PASS, NEXTAUTH) | Committed (dev-only) |
+| `frontend/.env.local` | Frontend secrets (GitHub OAuth, UAE PASS, NEXTAUTH) | Committed (dev-only) |
 | `backend/.env` | Backend secrets (OpenRouter API key) | Committed (dev-only) |
 

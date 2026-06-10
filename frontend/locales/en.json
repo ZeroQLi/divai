@@ -1,6 +1,7 @@
 {
   "app.title": "Housing Arrears Rescheduling Request",
   "login.title": "Login Required",
+  "login.github": "Sign in with GitHub",
   "login.uaepass": "Sign in with UAE PASS",
   "dashboard.status": "Application Status",
   "dashboard.status.explanation": "Your application current status is:",

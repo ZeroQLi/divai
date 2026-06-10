@@ -1,6 +1,7 @@
 {
   "app.title": "طلب إعادة جدولة متأخرات السكن",
   "login.title": "تسجيل الدخول مطلوب",
+  "login.github": "الدخول بواسطة جيت هاب",
   "login.uaepass": "الدخول عبر UAEPASS",
   "dashboard.status": "حالة الطلب",
   "dashboard.status.explanation": "حالة طلبك الحالية هي:",

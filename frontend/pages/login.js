@@ -20,7 +20,10 @@ export default function Login() {
       <LangToggle />
       <h1>{t['app.title']}</h1>
       <h2>{t['login.title']}</h2>
-      <button onClick={() => signIn('uae-pass')}>{t['login.uaepass']}</button>
+      <button onClick={() => signIn('github')}>{t['login.github']}</button>
+      <div style={{ marginTop: 16 }}>
+        <button onClick={() => signIn('uae-pass')}>{t['login.uaepass']}</button>
+      </div>
     </div>
   );
 }
